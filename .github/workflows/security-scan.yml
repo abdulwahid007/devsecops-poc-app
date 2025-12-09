@@ -19,15 +19,10 @@ jobs:
         env:
           IMAGE_NAME: ${{ secrets.IMAGE_NAME }}
 
-      - name: Install Trivy
+        - name: Run Trivy scan using Trivy Docker image
         run: |
-          curl -L https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.53.0_Linux-64bit.tar.gz -o trivy.tar.gz
-          tar -xzf trivy.tar.gz
-          sudo mv trivy /usr/local/bin/
-
-      - name: Run Trivy scan
-        run: |
-          trivy image --format json -o trivy-report.json $IMAGE_NAME || true
+          docker run --rm -v $PWD:/work aquasecurity/trivy:0.53.0 \
+            image --format json -o /work/trivy-report.json $IMAGE_NAME || true
         env:
           IMAGE_NAME: ${{ secrets.IMAGE_NAME }}
 
