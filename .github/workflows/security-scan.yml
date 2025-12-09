@@ -2,8 +2,9 @@ name: Security Scan and Upload to DefectDojo
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
+    branches:
+      - main
+  pull_request: {}
 
 jobs:
   trivy-scan:
@@ -15,20 +16,22 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t $IMAGE_NAME .
+          docker build -t "$IMAGE_NAME" .
         env:
           IMAGE_NAME: ${{ secrets.IMAGE_NAME }}
 
-        - name: Run Trivy scan using Trivy Docker image
+      - name: Run Trivy scan using Trivy Docker image
         run: |
-          docker run --rm -v $PWD:/work aquasecurity/trivy:0.53.0 \
-            image --format json -o /work/trivy-report.json $IMAGE_NAME || true
+          docker run --rm -v "$PWD:/work" aquasecurity/trivy:0.53.0 \
+            image --format json -o /work/trivy-report.json "$IMAGE_NAME" || true
         env:
           IMAGE_NAME: ${{ secrets.IMAGE_NAME }}
 
       - name: Upload report to DefectDojo
         run: |
-          curl -X POST "${{ secrets.DEFECTDOJO_URL }}/api/v2/import-scan/" \
+          ls -l
+          echo "Uploading report to DefectDojo..."
+          curl -v -X POST "${{ secrets.DEFECTDOJO_URL }}/api/v2/import-scan/" \
             -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
             -F "scan_type=Trivy Scan" \
             -F "product_name=DevSecOps POC Application" \
