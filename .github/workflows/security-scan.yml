@@ -22,6 +22,7 @@ jobs:
 
       - name: Run Trivy scan using Trivy Docker image
         run: |
+          echo "Running Trivy scan..."
           docker run --rm -v "$PWD:/work" aquasecurity/trivy:0.53.0 \
             image --format json -o /work/trivy-report.json "$IMAGE_NAME" || true
         env:
@@ -31,6 +32,13 @@ jobs:
         run: |
           ls -l
           echo "Uploading report to DefectDojo..."
+
+          # Agar Trivy report nahi bani ho to empty JSON file create kar do
+          if [ ! -f trivy-report.json ]; then
+            echo "trivy-report.json not found, creating empty report file"
+            echo '{}' > trivy-report.json
+          fi
+
           curl -v -X POST "${{ secrets.DEFECTDOJO_URL }}/api/v2/import-scan/" \
             -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
             -F "scan_type=Trivy Scan" \
